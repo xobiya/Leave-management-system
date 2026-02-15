@@ -1,0 +1,188 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+	:root {
+		color-scheme: light;
+		--base-0: 252 250 247;
+		--base-50: 245 242 236;
+		--base-100: 232 226 216;
+		--base-200: 213 204 191;
+		--base-300: 170 160 147;
+		--base-500: 98 90 80;
+		--base-700: 45 40 35;
+		--base-900: 26 22 18;
+		--base-950: 11 9 8;
+
+		--brand-50: 232 248 247;
+		--brand-100: 206 238 235;
+		--brand-200: 162 222 217;
+		--brand-400: 78 184 176;
+		--brand-600: 16 131 129;
+		--brand-700: 12 109 108;
+		--brand-800: 14 88 86;
+		--brand-900: 12 67 66;
+
+		--accent-50: 255 244 237;
+		--accent-100: 255 226 206;
+		--accent-300: 250 170 125;
+		--accent-500: 239 115 79;
+		--accent-700: 195 74 43;
+
+		--status-success: 34 197 94;
+		--status-warning: 245 158 11;
+		--status-danger: 239 68 68;
+		--status-info: 59 130 246;
+	}
+
+	.dark {
+		color-scheme: dark;
+		--base-0: 19 18 16;
+		--base-50: 28 26 24;
+		--base-100: 44 41 38;
+		--base-200: 63 58 53;
+		--base-300: 94 87 78;
+		--base-500: 159 150 138;
+		--base-700: 226 220 210;
+		--base-900: 250 248 244;
+		--base-950: 255 255 255;
+	}
+
+	body {
+		@apply bg-base-0 text-base-900 antialiased;
+	}
+
+	h1,
+	h2,
+	h3,
+	h4 {
+		@apply font-display text-base-900;
+	}
+
+	::selection {
+		@apply bg-accent-100 text-base-900;
+	}
+
+	[x-cloak] {
+		display: none !important;
+	}
+}
+
+@layer components {
+	.erp-card {
+		@apply rounded-3xl border border-base-100/60 bg-base-0/88 shadow-glass backdrop-blur dark:border-base-200/30 dark:bg-base-0/12;
+		background-image: linear-gradient(160deg, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0));
+	}
+
+	.erp-card-muted {
+		@apply rounded-3xl border border-base-100/50 bg-base-50/85 shadow-soft dark:border-base-200/25 dark:bg-base-50/12;
+	}
+
+	.erp-label {
+		@apply text-[11px] font-semibold uppercase tracking-[0.25em] text-base-500;
+	}
+
+	.erp-input {
+		@apply w-full rounded-2xl border border-base-100/70 bg-base-0/85 px-4 py-2.5 text-sm text-base-900 shadow-inset focus:border-brand-400 focus:ring-2 focus:ring-brand-200/70 dark:border-base-200/35 dark:bg-base-50/12 dark:text-base-900 dark:focus:border-brand-400 dark:focus:ring-brand-400/40;
+	}
+
+	.erp-button {
+		@apply inline-flex items-center justify-center rounded-2xl px-4 py-2 text-sm font-semibold text-white shadow-soft transition focus:outline-none focus:ring-2 focus:ring-brand-200/80;
+		background-image: linear-gradient(135deg, rgb(var(--brand-600)), rgb(var(--accent-500)));
+		box-shadow: 0 18px 35px -26px rgba(12, 67, 66, 0.8);
+	}
+
+	.erp-button-ghost {
+		@apply inline-flex items-center justify-center rounded-2xl border border-base-100/70 bg-base-0/80 px-4 py-2 text-sm font-semibold text-base-700 shadow-inset transition hover:bg-base-50 focus:outline-none focus:ring-2 focus:ring-brand-200/60 dark:border-base-200/35 dark:bg-base-50/12 dark:text-base-900;
+	}
+
+	.erp-badge {
+		@apply inline-flex items-center gap-1 rounded-full border border-base-100/70 bg-base-50/85 px-2.5 py-1 text-xs font-semibold text-base-700 dark:border-base-200/35 dark:bg-base-50/12 dark:text-base-900;
+	}
+
+	.erp-badge-success {
+		@apply border-transparent bg-green-500/15 text-green-700 dark:text-green-200;
+	}
+
+	.erp-badge-warning {
+		@apply border-transparent bg-amber-500/15 text-amber-700 dark:text-amber-200;
+	}
+
+	.erp-badge-danger {
+		@apply border-transparent bg-red-500/15 text-red-700 dark:text-red-200;
+	}
+
+	.erp-badge-info {
+		@apply border-transparent bg-blue-500/15 text-blue-700 dark:text-blue-200;
+	}
+
+	.erp-table {
+		@apply w-full border-separate border-spacing-y-3 text-sm;
+	}
+
+	.erp-table th {
+		@apply px-4 pb-2 text-left text-xs font-semibold uppercase tracking-wide text-base-500;
+	}
+
+	.erp-table td {
+		@apply rounded-2xl bg-base-0/88 px-4 py-3 text-base-700 shadow-inset dark:bg-base-0/12 dark:text-base-900;
+	}
+
+	.erp-kpi {
+		@apply flex flex-col gap-3 rounded-3xl border border-base-100/60 bg-base-0/88 p-5 shadow-soft dark:border-base-200/30 dark:bg-base-0/12;
+		background-image: radial-gradient(circle at 10% 10%, rgba(16, 131, 129, 0.12), transparent 55%);
+	}
+}
+
+@layer utilities {
+	.erp-backdrop {
+		background-image:
+			radial-gradient(circle at 12% 18%, rgba(16, 131, 129, 0.22), transparent 50%),
+			radial-gradient(circle at 90% 10%, rgba(239, 115, 79, 0.22), transparent 46%),
+			linear-gradient(135deg, rgba(26, 22, 18, 0.06), transparent 60%);
+	}
+
+	.erp-reveal {
+		animation: erp-fade-up 650ms ease both;
+	}
+
+	.erp-stagger > * {
+		animation: erp-fade-up 750ms ease both;
+	}
+
+	.erp-stagger > *:nth-child(1) { animation-delay: 0ms; }
+	.erp-stagger > *:nth-child(2) { animation-delay: 80ms; }
+	.erp-stagger > *:nth-child(3) { animation-delay: 140ms; }
+	.erp-stagger > *:nth-child(4) { animation-delay: 200ms; }
+	.erp-stagger > *:nth-child(5) { animation-delay: 260ms; }
+	.erp-stagger > *:nth-child(6) { animation-delay: 320ms; }
+
+	@media (prefers-reduced-motion: reduce) {
+		.erp-reveal,
+		.erp-stagger > * {
+			animation: none;
+		}
+	}
+
+
+@keyframes erp-fade-up {
+	from {
+		opacity: 0;
+		transform: translateY(16px) scale(0.98);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0) scale(1);
+	}
+}
+	.erp-scrollbar::-webkit-scrollbar {
+		height: 6px;
+		width: 6px;
+	}
+
+	.erp-scrollbar::-webkit-scrollbar-thumb {
+		background-color: rgba(100, 116, 139, 0.4);
+		border-radius: 999px;
+	}
+}
