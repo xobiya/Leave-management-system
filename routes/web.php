@@ -6,6 +6,7 @@ use App\Http\Controllers\Employee\DashboardController as EmployeeDashboardContro
 use App\Http\Controllers\Employee\LeavePreviewController as EmployeeLeavePreviewController;
 use App\Http\Controllers\Manager\ApprovalController as ManagerApprovalController;
 use App\Http\Controllers\Admin\LeaveTypeController;
+use App\Http\Controllers\Admin\LeavePolicyController;
 use App\Http\Controllers\Admin\AllocationController;
 use App\Http\Controllers\Admin\UserController;
 use Illuminate\Support\Facades\Route;
@@ -40,6 +41,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::view('/', 'erp.admin.dashboard')->name('dashboard');
         Route::get('/leave-types', [LeaveTypeController::class, 'index'])->name('leave-types');
         Route::post('/leave-types', [LeaveTypeController::class, 'store'])->name('leave-types.store');
+        Route::get('/leave-policies', [LeavePolicyController::class, 'index'])->name('leave-policies');
+        Route::post('/leave-policies', [LeavePolicyController::class, 'store'])->name('leave-policies.store');
+        Route::put('/leave-policies/{leavePolicy}/activate', [LeavePolicyController::class, 'activate'])->name('leave-policies.activate');
         Route::get('/allocations', [AllocationController::class, 'index'])->name('allocations');
         Route::post('/allocations', [AllocationController::class, 'store'])->name('allocations.store');
         Route::get('/users', [UserController::class, 'index'])->name('users');
