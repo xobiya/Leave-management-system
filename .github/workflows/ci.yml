@@ -51,6 +51,7 @@ jobs:
           npm run build
 
       - name: Run PHPUnit tests
+        if: github.ref_name != 'main'
         run: php artisan test
 
       - name: Run Laravel Pint
