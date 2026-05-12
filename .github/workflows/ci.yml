@@ -86,7 +86,7 @@ jobs:
           PHPEOF
 
       - name: Upload via FTP to InfinityFree
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        uses: SamKirkland/FTP-Deploy-Action@v4.4.0
         with:
           server: ${{ secrets.FTP_HOST }}
           username: ${{ secrets.FTP_USERNAME }}
@@ -95,3 +95,5 @@ jobs:
           server-dir: /
           protocol: ftps
           port: 21
+          security: loose
+          timeout: 120000
