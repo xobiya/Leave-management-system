@@ -1,84 +1,387 @@
-name: Production Deployment
+name: XobiyaHR CI/CD Pipeline
 
 on:
   push:
+    branches: [main, develop]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.gitignore'
+      - '.editorconfig'
+  pull_request:
     branches: [main]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        type: choice
+        options:
+          - production
+          - staging
+        default: production
+      run_migrations:
+        description: 'Run database migrations'
+        type: boolean
+        default: true
+      skip_tests:
+        description: 'Skip test suite'
+        type: boolean
+        default: false
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PHP_VERSION: '8.3'
+  NODE_VERSION: '20'
+  APP_NAME: 'XobiyaHR'
 
 jobs:
-  build-and-deploy:
+  # =========================================================================
+  # 1. LINT & STATIC ANALYSIS - runs on all pushes and PRs
+  # =========================================================================
+  lint:
+    name: Lint & Static Analysis
     runs-on: ubuntu-latest
+    timeout-minutes: 10
 
     steps:
-      - name: Checkout Code
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      # 1. Environment Setup
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.3' # InfinityFree usually supports up to 8.3
-          extensions: mbstring, dom, fileinfo, pdo_mysql, bcmath
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: mbstring, dom, fileinfo, pdo_mysql, bcmath, xml, json
+          tools: composer:v2, laravel/pint
+          coverage: none
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: composer-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-
+
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Run Laravel Pint (Code Style)
+        run: pint --test --ansi
+
+      - name: Check for security vulnerabilities
+        run: composer audit --ansi
+
+  # =========================================================================
+  # 2. FRONTEND BUILD CHECK - runs on all pushes and PRs
+  # =========================================================================
+  frontend:
+    name: Frontend Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install npm dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Build frontend assets
+        run: npm run build
+
+      - name: Upload compiled assets as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-build
+          path: public/build/
+          retention-days: 1
+          if-no-files-found: error
+
+  # =========================================================================
+  # 3. TEST SUITE - runs on all pushes and PRs (skippable via dispatch)
+  # =========================================================================
+  test:
+    name: Test Suite
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: [lint, frontend]
+
+  # =========================================================================
+  # 4. DEPLOY TO INFINITYFREE - runs only on push to main or manual dispatch
+  # =========================================================================
+  deploy:
+    name: Deploy to InfinityFree
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: [lint, frontend]
+    if: >
+      (github.ref == 'refs/heads/main' && github.event_name == 'push')
+      || github.event_name == 'workflow_dispatch'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: mbstring, dom, fileinfo, pdo_mysql, bcmath, xml, json
+          tools: composer:v2
           coverage: none
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: 'npm'
+          node-version: ${{ env.NODE_VERSION }}
 
-      # 2. Install & Build (Production Optimized)
-      - name: Install Dependencies
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: composer-prod-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-prod-
+
+      - name: Install dependencies (production only)
         run: |
-          composer install --no-dev --optimize-autoloader --no-interaction
-          npm ci
+          composer install --no-dev --optimize-autoloader --no-interaction --no-progress
+          npm ci --no-audit --no-fund
           npm run build
 
-      # 3. Secure Environment Configuration
-      - name: Create .env
+      - name: Verify compiled assets
+        run: |
+          if [ ! -f public/build/manifest.json ]; then
+            echo "ERROR: Frontend build missing manifest.json"
+            exit 1
+          fi
+          echo "Frontend assets verified successfully"
+
+      - name: Decode and validate .env
         run: |
           echo "${{ secrets.PROD_ENV_FILE }}" > .env
-          # Use a static key from secrets instead of generating a new one
-          # To ensure sessions persist across deployments
+          php artisan config:clear
 
-      # 4. Prepare Atomic Deployment Directory
-      # This moves the 'public' content to 'htdocs' while keeping the core separate
-      - name: Stage Deployment
+          # Validate required keys exist
+          php -r "
+            \$required = ['APP_KEY', 'APP_URL', 'DB_HOST', 'DB_DATABASE', 'DB_USERNAME', 'DB_PASSWORD'];
+            \$env = parse_ini_file('.env');
+            foreach (\$required as \$key) {
+              if (empty(\$env[\$key])) {
+                echo 'ERROR: Missing required .env key: ' . \$key . PHP_EOL;
+                exit(1);
+              }
+            }
+            echo '.env validation passed' . PHP_EOL;
+          "
+
+      - name: Prepare atomic deployment structure
         run: |
           mkdir -p build_dir/htdocs
           mkdir -p build_dir/core
-          
-          # Move public contents to htdocs
+
+          # Copy public contents to htdocs
           cp -r public/* build_dir/htdocs/
-          cp public/.htaccess build_dir/htdocs/
-          
-          # Move core files to core (excluding sensitive/unnecessary data)
-          rsync -av --progress . build_dir/core --exclude public --exclude .git --exclude .github --exclude node_modules --exclude tests
+          cp public/.htaccess build_dir/htdocs/ 2>/dev/null || true
 
-      # 5. Professional index.php Routing
-      # Points the public index to the core directory
-      - name: Patch index.php
+          # Copy core application files (excluding public & dev artifacts)
+          rsync -av --progress . build_dir/core \
+            --exclude public \
+            --exclude .git \
+            --exclude .github \
+            --exclude node_modules \
+            --exclude tests \
+            --exclude storage/debugbar \
+            --exclude storage/framework/cache/data \
+            --exclude .phpunit.result.cache \
+            --exclude implimentation.md \
+            --exclude plan.md
+
+          # Ensure storage directory structure exists
+          mkdir -p build_dir/core/storage/framework/{sessions,views,cache,testing}
+          mkdir -p build_dir/core/storage/logs
+          mkdir -p build_dir/core/bootstrap/cache
+
+          # Set proper permissions (IMPORTANT for shared hosting)
+          find build_dir -type d -exec chmod 755 {} \;
+          find build_dir -type f -exec chmod 644 {} \;
+          chmod -R 775 build_dir/core/storage
+          chmod -R 775 build_dir/core/bootstrap/cache
+
+      - name: Patch public/index.php for InfinityFree structure
         run: |
-          cat > build_dir/htdocs/index.php << 'EOF'
+          cat > build_dir/htdocs/index.php << 'INDEXPHP'
           <?php
-          define('LARAVEL_START', microtime(true));
-          require __DIR__.'/../core/vendor/autoload.php';
-          $app = require_once __DIR__.'/../core/bootstrap/app.php';
-          $kernel = $app->make(Illuminate\Contracts\Http\Kernel::class);
-          $response = $kernel->handle(
-              $request = Illuminate\Http\Request::capture()
-          );
-          $response->send();
-          $kernel->terminate($request, $response);
-          EOF
 
-      # 6. Smart Sync Deployment
-      - name: Deploy to InfinityFree
+          use Illuminate\Contracts\Http\Kernel;
+          use Illuminate\Http\Request;
+
+          define('LARAVEL_START', microtime(true));
+
+          // Determine if the application is in maintenance mode...
+          if (file_exists($maintenance = __DIR__.'/../core/storage/framework/maintenance.php')) {
+              require $maintenance;
+          }
+
+          // Register the Composer autoloader...
+          require __DIR__.'/../core/vendor/autoload.php';
+
+          // Bootstrap Laravel and handle the request...
+          $app = require_once __DIR__.'/../core/bootstrap/app.php';
+
+          $kernel = $app->make(Kernel::class);
+
+          $response = $kernel->handle(
+              $request = Request::capture()
+          )->send();
+
+          $kernel->terminate($request, $response);
+          INDEXPHP
+
+      - name: Create .htaccess for InfinityFree (force HTTPS & rewrites)
+        run: |
+          cat > build_dir/htdocs/.htaccess << 'HTACCESS'
+          <IfModule mod_rewrite.c>
+              RewriteEngine On
+
+              # Force HTTPS
+              RewriteCond %{HTTPS} off
+              RewriteRule ^(.*)$ https://%{HTTP_HOST}/$1 [R=301,L]
+
+              # Handle Authorization Header
+              RewriteCond %{HTTP:Authorization} .
+              RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+              # Redirect Trailing Slashes If Not A Folder...
+              RewriteCond %{REQUEST_FILENAME} !-d
+              RewriteCond %{REQUEST_URI} (.+)/$
+              RewriteRule ^ %1 [L,R=301]
+
+              # Send Requests To Front Controller...
+              RewriteCond %{REQUEST_FILENAME} !-d
+              RewriteCond %{REQUEST_FILENAME} !-f
+              RewriteRule ^ index.php [L]
+          </IfModule>
+
+          # Security headers
+          <IfModule mod_headers.c>
+              Header always set X-Content-Type-Options "nosniff"
+              Header always set X-Frame-Options "SAMEORIGIN"
+              Header always set X-XSS-Protection "1; mode=block"
+              Header always set Referrer-Policy "strict-origin-when-cross-origin"
+          </IfModule>
+
+          # Deny access to sensitive files
+          <FilesMatch "\.(env|log|sql|md|gitignore|lock)$">
+              Order allow,deny
+              Deny from all
+          </FilesMatch>
+
+          # Deny access to hidden files
+          <FilesMatch "^\.">
+              Order allow,deny
+              Deny from all
+          </FilesMatch>
+          HTACCESS
+
+      - name: Create storage symlink script for InfinityFree
+        run: |
+          cat > build_dir/core/public_symlink.php << 'SYMLINK'
+          <?php
+          /**
+           * Run this script once after deployment to create the storage symlink.
+           * Visit: https://yourdomain.com/public_symlink.php
+           * Delete after successful execution.
+           */
+          $target = __DIR__ . '/storage/app/public';
+          $link = __DIR__ . '/../htdocs/storage';
+
+          if (file_exists($link)) {
+              echo "Symlink already exists.<br>";
+          } else {
+              if (symlink($target, $link)) {
+                  echo "Storage symlink created successfully.<br>";
+              } else {
+                  echo "Failed to create symlink. Try manual: ln -s ../core/storage/app/public htdocs/storage<br>";
+              }
+          }
+
+          echo "Done.";
+          SYMLINK
+
+      - name: Deploy via FTP to InfinityFree
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ${{ secrets.FTP_HOST }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
           local-dir: build_dir/
-          server-dir: ./
-          # This ensures we don't delete logs or user uploads on the server
+          server-dir: ${{ vars.FTP_TARGET_DIR || './' }}
           dangerous-clean-slate: false
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/node_modules/**
+            **/tests/**
+            **/storage/logs/**
+            **/storage/framework/cache/data/**
+            **/storage/debugbar/**
+            **/.phpunit.result.cache
+            **/implimentation.md
+            **/plan.md
+
+      - name: Post-deployment smoke test
+        run: |
+          sleep 5
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" --connect-timeout 10 --max-time 15 "${{ secrets.APP_URL }}" 2>/dev/null || echo "000")
+          if [ "$HTTP_CODE" = "000" ]; then
+            echo "⚠️  Warning: Could not reach ${{ secrets.APP_URL }}. Site may still be propagating."
+          elif [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 500 ]; then
+            echo "✅ Deployment verified - HTTP $HTTP_CODE"
+          else
+            echo "❌ Deployment may have issues - HTTP $HTTP_CODE"
+          fi
+
+      - name: Notify on failure
+        if: failure() && github.ref == 'refs/heads/main'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const workflowUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const message = `❌ *${process.env.APP_NAME} Deployment Failed*\nRepository: ${context.repo.owner}/${context.repo.repo}\nBranch: ${context.ref}\nCommit: ${context.sha.substring(0, 7)}\nWorkflow: ${workflowUrl}`;
+
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `🚑 Deployment failed on ${new Date().toISOString().split('T')[0]}`,
+              body: message,
+              labels: ['deployment', 'bug']
+            });
+
+      - name: Create GitHub Release on successful deploy
+        if: success() && github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ github.run_number }}
+          name: Release v${{ github.run_number }} - ${{ github.event.head_commit.message || 'Manual deploy' }}
+          body: |
+            ## 🚀 Deployment ${{ github.run_number }}
+
+            **Deployed:** ${{ github.event.head_commit.message || 'Manual workflow dispatch' }}
+
+            **Commit:** ${{ github.sha }}
+            **Environment:** ${{ inputs.environment || 'production' }}
+            **Migrations:** ${{ inputs.run_migrations || 'yes' }}
+          target_commitish: ${{ github.sha }}
+          generate_release_notes: false
