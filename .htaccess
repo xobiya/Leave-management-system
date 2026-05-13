@@ -8,7 +8,6 @@ DirectoryIndex public/index.php
     RewriteRule ^\.well-known/ - [L]
 
     # Ensure the root path resolves to Laravel's front controller.
-    RewriteCond %{REQUEST_URI} ^/$
     RewriteRule ^$ public/index.php [L]
 
     # Send all other requests through Laravel's /public directory.
