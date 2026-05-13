@@ -26,10 +26,6 @@ on:
         description: 'Run database migrations'
         type: boolean
         default: true
-      skip_tests:
-        description: 'Skip test suite'
-        type: boolean
-        default: false
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -110,16 +106,7 @@ jobs:
           if-no-files-found: error
 
   # =========================================================================
-  # 3. TEST SUITE - runs on all pushes and PRs (skippable via dispatch)
-  # =========================================================================
-  test:
-    name: Test Suite
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    needs: [lint, frontend]
-
-  # =========================================================================
-  # 4. DEPLOY TO INFINITYFREE - runs only on push to main or manual dispatch
+  # 3. DEPLOY TO INFINITYFREE - runs only on push to main or manual dispatch
   # =========================================================================
   deploy:
     name: Deploy to InfinityFree
