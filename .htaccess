@@ -12,6 +12,5 @@ DirectoryIndex public/index.php
 
     # Send all other requests through Laravel's /public directory.
     RewriteCond %{REQUEST_URI} !^/public/
-    RewriteCond %{REQUEST_URI} !^/\.well-known/
     RewriteRule ^(.*)$ public/$1 [L,QSA]
 </IfModule>
