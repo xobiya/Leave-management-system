@@ -1,10 +1,18 @@
+DirectoryIndex public/index.php
+
 <IfModule mod_rewrite.c>
     RewriteEngine On
+    RewriteBase /
 
     # Allow SSL/domain validation paths used by hosting providers.
     RewriteRule ^\.well-known/ - [L]
 
-    # Send all requests through Laravel's /public directory.
+    # Ensure the root path resolves to Laravel's front controller.
+    RewriteCond %{REQUEST_URI} ^/$
+    RewriteRule ^$ public/index.php [L]
+
+    # Send all other requests through Laravel's /public directory.
     RewriteCond %{REQUEST_URI} !^/public/
-    RewriteRule ^(.*)$ public/$1 [L]
+    RewriteCond %{REQUEST_URI} !^/\.well-known/
+    RewriteRule ^(.*)$ public/$1 [L,QSA]
 </IfModule>
