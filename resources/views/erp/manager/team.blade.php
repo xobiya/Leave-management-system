@@ -7,11 +7,6 @@
                     <h2 class="mt-2 text-xl font-semibold">Team availability view</h2>
                 </div>
                 <div class="flex flex-wrap gap-2">
-                    <select class="w-full px-4 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-                        <option>All departments</option>
-                        <option>Design</option>
-                        <option>Engineering</option>
-                    </select>
                     <button class="px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition shadow-sm">Export</button>
                 </div>
             </div>
@@ -27,27 +22,32 @@
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100">
-                        <tr class="hover:bg-gray-50 transition text-sm">
-                            <td class="px-4 py-3 font-medium text-gray-900">M. Alvarez</td>
-                            <td class="px-4 py-3 text-gray-700">Product Designer</td>
-                            <td class="px-4 py-3 text-gray-700">Feb 20 - Feb 21</td>
-                            <td class="px-4 py-3"><span class="px-2 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-700">Limited</span></td>
-                            <td class="px-4 py-3 text-gray-700">12.5 days</td>
-                        </tr>
-                        <tr class="hover:bg-gray-50 transition text-sm">
-                            <td class="px-4 py-3 font-medium text-gray-900">K. Singh</td>
-                            <td class="px-4 py-3 text-gray-700">Frontend Engineer</td>
-                            <td class="px-4 py-3 text-gray-700">Mar 2</td>
-                            <td class="px-4 py-3"><span class="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-700">Healthy</span></td>
-                            <td class="px-4 py-3 text-gray-700">18 days</td>
-                        </tr>
-                        <tr class="hover:bg-gray-50 transition text-sm">
-                            <td class="px-4 py-3 font-medium text-gray-900">J. Okoye</td>
-                            <td class="px-4 py-3 text-gray-700">Support Lead</td>
-                            <td class="px-4 py-3 text-gray-700">Mar 4 - Mar 6</td>
-                            <td class="px-4 py-3"><span class="px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-700">Risk</span></td>
-                            <td class="px-4 py-3 text-gray-700">9 days</td>
-                        </tr>
+                        @forelse($teamMembers as $member)
+                            <tr class="hover:bg-gray-50 transition text-sm">
+                                <td class="px-4 py-3 font-medium text-gray-900">{{ $member->name }}</td>
+                                <td class="px-4 py-3 text-gray-700">{{ $member->employee?->position?->title ?? $member->job_title ?? 'N/A' }}</td>
+                                <td class="px-4 py-3 text-gray-700">
+                                    @if($member->next_leave)
+                                        {{ $member->next_leave->start_date->format('M j') }}@if($member->next_leave->start_date != $member->next_leave->end_date) - {{ $member->next_leave->end_date->format('M j') }}@endif
+                                    @else
+                                        <span class="text-gray-400">None</span>
+                                    @endif
+                                </td>
+                                <td class="px-4 py-3">
+                                    @php
+                                        $balance = $member->total_balance;
+                                        $status = $balance > 15 ? 'Healthy' : ($balance > 5 ? 'Limited' : 'Risk');
+                                        $color = $balance > 15 ? 'bg-green-100 text-green-700' : ($balance > 5 ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700');
+                                    @endphp
+                                    <span class="px-2 py-1 text-xs font-medium rounded-full {{ $color }}">{{ $status }}</span>
+                                </td>
+                                <td class="px-4 py-3 text-gray-700">{{ number_format($balance, 1) }} days</td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="5" class="px-4 py-8 text-center text-gray-400">No team members found.</td>
+                            </tr>
+                        @endforelse
                     </tbody>
                 </table>
             </div>
@@ -55,22 +55,21 @@
 
         <div class="grid gap-4 md:grid-cols-3">
             <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-5">
-                <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Coverage alert</p>
-                <h3 class="mt-2 text-lg font-semibold">Support team</h3>
-                <p class="mt-2 text-sm text-gray-500">Two overlapping requests require backup staffing.</p>
-                <button class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition shadow-sm mt-4 w-full">Assign coverage</button>
+                <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Team size</p>
+                <h3 class="mt-2 text-lg font-semibold">{{ $teamMembers->count() }} members</h3>
+                <p class="mt-2 text-sm text-gray-500">Direct reports under your supervision.</p>
             </div>
             <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-5">
                 <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Plan ahead</p>
-                <h3 class="mt-2 text-lg font-semibold">March capacity</h3>
-                <p class="mt-2 text-sm text-gray-500">Forecast suggests 12% drop in availability.</p>
-                <button class="px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition shadow-sm mt-4 w-full">Review forecast</button>
+                <h3 class="mt-2 text-lg font-semibold">Capacity overview</h3>
+                <p class="mt-2 text-sm text-gray-500">Monitor team availability and plan coverage.</p>
+                <a href="{{ route('manager.calendar') }}" class="inline-block px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition shadow-sm mt-4">View calendar</a>
             </div>
             <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-5">
                 <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Tools</p>
                 <h3 class="mt-2 text-lg font-semibold">Bulk actions</h3>
-                <p class="mt-2 text-sm text-gray-500">Approve low-risk requests in one click.</p>
-                <button class="px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition shadow-sm mt-4 w-full">Open bulk tools</button>
+                <p class="mt-2 text-sm text-gray-500">Approve pending requests in one click.</p>
+                <a href="{{ route('manager.dashboard') }}" class="inline-block px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition shadow-sm mt-4">Go to dashboard</a>
             </div>
         </div>
     </div>

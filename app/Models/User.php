@@ -61,6 +61,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'hire_date' => 'date',
+            'last_login_at' => 'datetime',
         ];
     }
 
@@ -92,12 +93,6 @@ class User extends Authenticatable
     public function roles(): BelongsToMany
     {
         return $this->belongsToMany(Role::class)->withTimestamps();
-    }
-
-    public function permissions(): BelongsToMany
-    {
-        return $this->belongsToMany(Permission::class, 'permission_role', 'role_id', 'permission_id')
-            ->using(Role::class);
     }
 
     public function leaveAllocations(): HasMany
@@ -143,5 +138,30 @@ class User extends Authenticatable
     public function employee(): HasOne
     {
         return $this->hasOne(Employee::class);
+    }
+
+    public function leaveHistories(): HasMany
+    {
+        return $this->hasMany(LeaveHistory::class);
+    }
+
+    public function tasks(): HasMany
+    {
+        return $this->hasMany(Task::class, 'assigned_to');
+    }
+
+    public function helpdeskTicketsAssigned(): HasMany
+    {
+        return $this->hasMany(HelpdeskTicket::class, 'assigned_to');
+    }
+
+    public function helpdeskTicketsCreated(): HasMany
+    {
+        return $this->hasMany(HelpdeskTicket::class, 'created_by');
+    }
+
+    public function projectsManaged(): HasMany
+    {
+        return $this->hasMany(Project::class, 'manager_id');
     }
 }

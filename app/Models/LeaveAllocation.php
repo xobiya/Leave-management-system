@@ -2,11 +2,13 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class LeaveAllocation extends Model
 {
+    use HasFactory;
     protected $fillable = [
         'user_id',
         'leave_type_id',
@@ -37,6 +39,8 @@ class LeaveAllocation extends Model
         'yearly_accrued_amount' => 'decimal:2',
         'expiring_carryover_days' => 'decimal:2',
         'total_allocated_days' => 'decimal:2',
+        'year' => 'integer',
+        'allocation_type' => 'string',
     ];
 
     public function user(): BelongsTo

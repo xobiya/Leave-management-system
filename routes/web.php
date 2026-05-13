@@ -13,7 +13,7 @@ Route::get('/', function () {
 
 // ── Database Maintenance (Moved outside auth for initial setup) ────────────
 Route::get('/system/migrate', function() {
-    if (request('token') !== 'xobiya-secret-123') abort(403);
+    if (request('token') !== config('app.secret_token', env('APP_SECRET', 'change-me'))) abort(403);
     try {
         \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
         return "Migration successful: " . \Illuminate\Support\Facades\Artisan::output();
@@ -23,7 +23,7 @@ Route::get('/system/migrate', function() {
 })->name('system.migrate');
 
 Route::get('/system/seed', function() {
-    if (request('token') !== 'xobiya-secret-123') abort(403);
+    if (request('token') !== config('app.secret_token', env('APP_SECRET', 'change-me'))) abort(403);
     try {
         \Illuminate\Support\Facades\Artisan::call('db:seed', ['--force' => true]);
         return "Seeding successful: " . \Illuminate\Support\Facades\Artisan::output();
@@ -82,7 +82,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/manager/approvals/{leaveRequest}/reject', [\App\Http\Controllers\Manager\ApprovalController::class, 'reject'])->name('manager.approvals.reject');
 
     // ── Manager Reports ──────────────────────────────────────────────────────
-    Route::get('/manager/reports', fn() => view('erp.manager.reports'))->name('manager.reports');
+    Route::get('/manager/reports', [\App\Http\Controllers\Manager\DashboardController::class, 'reports'])->name('manager.reports');
     Route::prefix('manager/reports')->name('manager.reports.')->group(function () {
         Route::get('/by-employee', [\App\Http\Controllers\Manager\ReportController::class, 'byEmployee'])->name('by-employee');
         Route::get('/summary', [\App\Http\Controllers\Manager\ReportController::class, 'summary'])->name('summary');
@@ -90,13 +90,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     // ── Manager Sidebar ─────────────────────────────────────────────────────
-    Route::get('/manager/team', fn() => view('erp.manager.team'))->name('manager.team');
-    Route::get('/manager/calendar', fn() => view('erp.manager.calendar'))->name('manager.calendar');
+    Route::get('/manager/team', [\App\Http\Controllers\Manager\DashboardController::class, 'team'])->name('manager.team');
+    Route::get('/manager/calendar', [\App\Http\Controllers\Manager\DashboardController::class, 'calendar'])->name('manager.calendar');
 
     // ── Employee Sidebar ────────────────────────────────────────────────────
     Route::get('/employee/requests', [\App\Http\Controllers\Employee\LeaveRequestController::class, 'index'])->name('employee.requests');
     Route::get('/employee/calendar', [\App\Http\Controllers\Employee\LeaveDashboardController::class, 'calendar'])->name('employee.calendar');
-    Route::get('/employee/notifications', fn() => view('erp.employee.notifications'))->name('employee.notifications');
 
     // ── Admin / HR Management ──────────────────────────────────────────────
     Route::get('/admin', [\App\Http\Controllers\Admin\DashboardController::class, 'index'])->name('admin.dashboard');
@@ -350,6 +349,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/reports/payroll-summary', [\App\Http\Controllers\ReportController::class, 'payrollSummary'])->name('reports.payroll-summary');
     Route::get('/reports/attendance-summary', [\App\Http\Controllers\ReportController::class, 'attendanceSummary'])->name('reports.attendance-summary');
     Route::get('/reports/accounting', [\App\Http\Controllers\ReportController::class, 'accountingReports'])->name('reports.accounting');
+
+    // ── Notifications ───────────────────────────────────────────────────
+    Route::get('/employee/notifications', [\App\Http\Controllers\NotificationController::class, 'index'])->name('employee.notifications');
 });
 
 require __DIR__ . '/auth.php';

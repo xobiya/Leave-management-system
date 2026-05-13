@@ -117,6 +117,11 @@
                     ['route' => 'helpdesk.index',          'label' => 'Service Desk'],
                     ['route' => 'expenses.index',          'label' => 'Expense Management'],
                     ['route' => 'expenses.my',             'label' => 'My Expenses'],
+                    ['route' => 'skills.index',            'label' => 'Skills Directory'],
+                    ['route' => 'skills.employees',        'label' => 'Employee Skills'],
+                    ['route' => 'recruitment.index',       'label' => 'Recruitment'],
+                    ['route' => 'recruitment.applications','label' => 'Job Applications'],
+                    ['route' => 'gamification.index',      'label' => 'Gamification'],
                     ['route' => 'lunch.index',             'label' => 'Catering Management'],
                 ]
             ],

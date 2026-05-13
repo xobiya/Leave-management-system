@@ -23,6 +23,7 @@ class SalesOrder extends Model
     protected $casts = [
         'date' => 'date',
         'total_amount' => 'decimal:2',
+        'status' => 'string',
     ];
 
     public function customer(): BelongsTo

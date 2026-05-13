@@ -10,19 +10,19 @@
     <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
         <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
             <p class="text-[10px] uppercase tracking-wider text-gray-400 font-bold mb-1">Total Badges</p>
-            <p class="text-2xl font-bold text-gray-900">{{ \App\Models\GamificationBadge::count() }}</p>
+            <p class="text-2xl font-bold text-gray-900">{{ $stats['total_badges'] }}</p>
         </div>
         <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
             <p class="text-[10px] uppercase tracking-wider text-gray-400 font-bold mb-1">Active Challenges</p>
-            <p class="text-2xl font-bold text-indigo-600">{{ \App\Models\GamificationChallenge::where('state', 'in_progress')->count() }}</p>
+            <p class="text-2xl font-bold text-indigo-600">{{ $stats['active_challenges'] }}</p>
         </div>
         <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
             <p class="text-[10px] uppercase tracking-wider text-gray-400 font-bold mb-1">Badges Awarded</p>
-            <p class="text-2xl font-bold text-orange-600">{{ \App\Models\GamificationBadgeAssignment::count() }}</p>
+            <p class="text-2xl font-bold text-orange-600">{{ $stats['total_assignments'] }}</p>
         </div>
         <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
             <p class="text-[10px] uppercase tracking-wider text-gray-400 font-bold mb-1">Users with Karma</p>
-            <p class="text-2xl font-bold text-green-600">{{ \App\Models\GamificationKarmaTracking::distinct('user_id')->count('user_id') }}</p>
+            <p class="text-2xl font-bold text-green-600">{{ $stats['users_with_karma'] }}</p>
         </div>
     </div>
 

@@ -7,28 +7,29 @@
                     <h2 class="mt-2 text-xl font-semibold">Leave trends</h2>
                 </div>
                 <div class="flex flex-wrap gap-2">
-                    <select class="w-full px-4 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-                        <option>Last 6 months</option>
-                        <option>Last 12 months</option>
-                    </select>
-                    <button class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition shadow-sm">Export PDF</button>
+                    <a href="{{ route('manager.reports.balance') }}" class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition shadow-sm">Detailed reports</a>
                 </div>
             </div>
-            <div class="mt-6 grid gap-4 md:grid-cols-3">
+            <div class="mt-6 grid gap-4 md:grid-cols-4">
                 <div class="bg-gray-50 border border-gray-100 rounded-xl p-4">
                     <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Top request type</p>
-                    <p class="mt-2 text-lg font-semibold">Annual Leave</p>
-                    <p class="text-xs text-gray-500">48% of all requests</p>
+                    <p class="mt-2 text-lg font-semibold">{{ $topType?->leaveType?->name ?? 'N/A' }}</p>
+                    <p class="text-xs text-gray-500">{{ $topType ? round($topType->total / max($requests + $rejected, 1) * 100) : 0 }}% of all requests</p>
                 </div>
                 <div class="bg-gray-50 border border-gray-100 rounded-xl p-4">
                     <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Average duration</p>
-                    <p class="mt-2 text-lg font-semibold">2.6 days</p>
-                    <p class="text-xs text-gray-500">Median across team</p>
+                    <p class="mt-2 text-lg font-semibold">{{ $avgDuration ? number_format($avgDuration, 1) : '0' }} days</p>
+                    <p class="text-xs text-gray-500">Per approved request</p>
                 </div>
                 <div class="bg-gray-50 border border-gray-100 rounded-xl p-4">
-                    <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Approval speed</p>
-                    <p class="mt-2 text-lg font-semibold">5.2 hrs</p>
-                    <p class="text-xs text-gray-500">Within target SLA</p>
+                    <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Approved</p>
+                    <p class="mt-2 text-lg font-semibold text-green-600">{{ $requests }}</p>
+                    <p class="text-xs text-gray-500">{{ $requests + $rejected > 0 ? round($requests / ($requests + $rejected) * 100) : 0 }}% approval rate</p>
+                </div>
+                <div class="bg-gray-50 border border-gray-100 rounded-xl p-4">
+                    <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Rejected</p>
+                    <p class="mt-2 text-lg font-semibold text-red-600">{{ $rejected }}</p>
+                    <p class="text-xs text-gray-500">{{ $requests + $rejected > 0 ? round($rejected / ($requests + $rejected) * 100) : 0 }}% rejection rate</p>
                 </div>
             </div>
         </div>
@@ -48,27 +49,19 @@
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100">
-                        <tr class="hover:bg-gray-50 transition text-sm">
-                            <td class="px-4 py-3 font-medium text-gray-900">Design</td>
-                            <td class="px-4 py-3 text-gray-700">42</td>
-                            <td class="px-4 py-3 text-gray-700">38</td>
-                            <td class="px-4 py-3 text-gray-700">4</td>
-                            <td class="px-4 py-3 text-gray-700">2.1</td>
-                        </tr>
-                        <tr class="hover:bg-gray-50 transition text-sm">
-                            <td class="px-4 py-3 font-medium text-gray-900">Engineering</td>
-                            <td class="px-4 py-3 text-gray-700">55</td>
-                            <td class="px-4 py-3 text-gray-700">50</td>
-                            <td class="px-4 py-3 text-gray-700">5</td>
-                            <td class="px-4 py-3 text-gray-700">2.8</td>
-                        </tr>
-                        <tr class="hover:bg-gray-50 transition text-sm">
-                            <td class="px-4 py-3 font-medium text-gray-900">Support</td>
-                            <td class="px-4 py-3 text-gray-700">30</td>
-                            <td class="px-4 py-3 text-gray-700">26</td>
-                            <td class="px-4 py-3 text-gray-700">4</td>
-                            <td class="px-4 py-3 text-gray-700">3.0</td>
-                        </tr>
+                        @forelse($departmentBreakdown as $dept)
+                            <tr class="hover:bg-gray-50 transition text-sm">
+                                <td class="px-4 py-3 font-medium text-gray-900">{{ $dept->department }}</td>
+                                <td class="px-4 py-3 text-gray-700">{{ $dept->total_requests }}</td>
+                                <td class="px-4 py-3 text-gray-700">{{ $dept->approved }}</td>
+                                <td class="px-4 py-3 text-gray-700">{{ $dept->rejected }}</td>
+                                <td class="px-4 py-3 text-gray-700">{{ number_format($dept->avg_days, 1) }}</td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="5" class="px-4 py-8 text-center text-gray-400">No leave data available</td>
+                            </tr>
+                        @endforelse
                     </tbody>
                 </table>
             </div>

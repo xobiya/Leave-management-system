@@ -8,6 +8,14 @@ use Illuminate\Http\Request;
 
 class NotificationController extends Controller
 {
+    public function index()
+    {
+        $notifications = ErpNotification::forUser(auth()->id())
+            ->latest()
+            ->paginate(20);
+        return view('erp.employee.notifications', compact('notifications'));
+    }
+
     public function markAllRead()
     {
         NotificationService::markAllRead(auth()->id());

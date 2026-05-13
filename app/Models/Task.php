@@ -13,7 +13,7 @@ class Task extends Model
 
     protected $fillable = ['project_id', 'title', 'assigned_to', 'deadline', 'status'];
 
-    protected $casts = ['deadline' => 'date'];
+    protected $casts = ['deadline' => 'date', 'status' => 'string'];
 
     public function project(): BelongsTo
     {

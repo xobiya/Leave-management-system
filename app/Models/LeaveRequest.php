@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class LeaveRequest extends Model
 {
+    use HasFactory;
     protected $fillable = [
         'user_id',
         'leave_type_id',
@@ -39,6 +41,11 @@ class LeaveRequest extends Model
         'hr_approved_at' => 'datetime',
         'approved_at' => 'datetime',
         'rejected_at' => 'datetime',
+        'status' => 'string',
+        'request_unit' => 'string',
+        'half_day_period' => 'string',
+        'manager_status' => 'string',
+        'hr_status' => 'string',
     ];
 
     public function user(): BelongsTo

@@ -105,6 +105,8 @@ return [
         ),
     ],
 
+    'secret_token' => env('APP_SECRET', 'change-me'),
+
     /*
     |--------------------------------------------------------------------------
     | Maintenance Mode Driver

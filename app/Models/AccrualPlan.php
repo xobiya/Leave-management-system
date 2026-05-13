@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class AccrualPlan extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
         'name',
         'leave_type_id',
@@ -23,6 +26,9 @@ class AccrualPlan extends Model
         'custom_carryover_date' => 'date',
         'is_based_on_worked_time' => 'boolean',
         'is_active' => 'boolean',
+        'transition_mode' => 'string',
+        'accrued_gain_time' => 'string',
+        'carryover_date' => 'string',
     ];
 
     public function leaveType(): BelongsTo

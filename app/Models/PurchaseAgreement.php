@@ -13,7 +13,11 @@ class PurchaseAgreement extends Model
         'total_amount', 'status', 'terms', 'created_by',
     ];
 
-    protected $casts = ['start_date' => 'date', 'end_date' => 'date'];
+    protected $casts = [
+        'start_date' => 'date',
+        'end_date' => 'date',
+        'total_amount' => 'decimal:2',
+    ];
 
     public function vendor(): BelongsTo { return $this->belongsTo(Vendor::class); }
     public function lines(): HasMany { return $this->hasMany(PurchaseAgreementLine::class, 'purchase_agreement_id'); }

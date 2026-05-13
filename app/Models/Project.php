@@ -13,6 +13,15 @@ class Project extends Model
 
     protected $fillable = ['name', 'code', 'manager_id', 'status'];
 
+    protected $casts = [
+        'status' => 'string',
+    ];
+
+    public function milestones(): HasMany
+    {
+        return $this->hasMany(Milestone::class);
+    }
+
     public function manager(): BelongsTo
     {
         return $this->belongsTo(User::class, 'manager_id');

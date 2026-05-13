@@ -2,11 +2,13 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class LeaveType extends Model
 {
+    use HasFactory;
     protected $fillable = [
         'name',
         'code',
@@ -39,6 +41,11 @@ class LeaveType extends Model
         'requires_allocation' => 'boolean',
         'accrual_rate' => 'decimal:2',
         'accrual_cap' => 'decimal:2',
+        'allocation_type' => 'string',
+        'validation_type' => 'string',
+        'request_unit' => 'string',
+        'carry_forward_cap' => 'integer',
+        'max_days_per_request' => 'integer',
     ];
 
     public function allocations(): HasMany
@@ -69,5 +76,10 @@ class LeaveType extends Model
     public function requiresHrApproval(): bool
     {
         return in_array($this->validation_type, ['hr', 'both'], true);
+    }
+
+    public function histories(): HasMany
+    {
+        return $this->hasMany(LeaveHistory::class);
     }
 }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Employee;
 use App\Http\Controllers\Controller;
 use App\Models\LeaveRequest;
 use App\Models\LeaveType;
+use App\Models\LeaveAllocation;
 use App\Models\Attendance;
 use App\Services\LeaveBalanceService;
 use App\Services\LeaveDashboardService;
@@ -19,6 +20,24 @@ class LeaveDashboardController extends Controller
         private LeaveBalanceService $balanceService,
         private LeaveDashboardService $dashboardService,
     ) {}
+
+    public function calendar(Request $request): View
+    {
+        $user = $request->user();
+        $year = (int) ($request->get('year', now()->year));
+        $month = (int) ($request->get('month', now()->month));
+
+        $events = LeaveRequest::with('leaveType')
+            ->where('user_id', $user->id)
+            ->whereYear('start_date', $year)
+            ->whereMonth('start_date', $month)
+            ->orderBy('start_date')
+            ->get();
+
+        $daysInMonth = now()->setYear($year)->setMonth($month)->daysInMonth;
+
+        return view('erp.employee.calendar', compact('events', 'year', 'month', 'daysInMonth'));
+    }
 
     public function index(Request $request): View|\Illuminate\Http\RedirectResponse
     {

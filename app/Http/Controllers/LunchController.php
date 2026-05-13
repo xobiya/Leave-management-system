@@ -12,7 +12,7 @@ class LunchController extends Controller
 {
     public function index()
     {
-        $this->authorize('leave.read');
+        $this->authorize('lunch.read');
         $products = LunchProduct::with('category')->where('is_active', true)->latest()->get();
         $orders = LunchOrder::with(['employee.user'])->latest()->take(10)->get();
         $categories = LunchCategory::all();
@@ -35,7 +35,7 @@ class LunchController extends Controller
 
     public function orders()
     {
-        $this->authorize('leave.read');
+        $this->authorize('lunch.read');
         $orders = LunchOrder::with(['employee.user', 'lines.product'])->latest()->get();
         $employees = Employee::with('user')->where('status', 'active')->get();
         $products = LunchProduct::with('category')->where('is_active', true)->get();
@@ -44,7 +44,7 @@ class LunchController extends Controller
 
     public function storeOrder(Request $request)
     {
-        $this->authorize('leave.create');
+        $this->authorize('lunch.create');
         $validated = $request->validate([
             'items' => 'required|array',
             'items.*.product_id' => 'required|exists:lunch_products,id',
@@ -74,7 +74,7 @@ class LunchController extends Controller
 
     public function updateOrderStatus(Request $request, LunchOrder $order)
     {
-        $this->authorize('leave.update');
+        $this->authorize('lunch.update');
         $validated = $request->validate([
             'status' => 'required|string|max:50',
         ]);

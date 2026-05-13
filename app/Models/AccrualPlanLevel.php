@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class AccrualPlanLevel extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
         'accrual_plan_id',
         'sequence',
@@ -32,6 +35,15 @@ class AccrualPlanLevel extends Model
         'added_value' => 'decimal:2',
         'cap_accrued_time_amount' => 'decimal:2',
         'cap_accrued_time_yearly_amount' => 'decimal:2',
+        'sequence' => 'integer',
+        'first_day' => 'integer',
+        'first_month' => 'integer',
+        'carryover_limit_days' => 'integer',
+        'accrual_validity_days' => 'integer',
+        'added_value_type' => 'string',
+        'frequency' => 'string',
+        'action_with_unused_accruals' => 'string',
+        'carryover_options' => 'string',
     ];
 
     public function accrualPlan(): BelongsTo

@@ -13,7 +13,7 @@ class JournalEntry extends Model
 
     protected $fillable = ['journal_id', 'code', 'date', 'reference', 'state'];
 
-    protected $casts = ['date' => 'date'];
+    protected $casts = ['date' => 'date', 'state' => 'string'];
 
     public function journal(): BelongsTo
     {

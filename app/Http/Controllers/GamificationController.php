@@ -23,6 +23,7 @@ class GamificationController extends Controller
             'total_challenges' => GamificationChallenge::count(),
             'active_challenges' => GamificationChallenge::where('state', 'in_progress')->count(),
             'total_assignments' => GamificationBadgeAssignment::count(),
+            'users_with_karma' => GamificationKarmaTracking::distinct('user_id')->count('user_id'),
         ];
 
         return view('erp.gamification.index', compact('stats'));

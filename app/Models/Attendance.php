@@ -30,6 +30,8 @@ class Attendance extends Model
         'check_out' => 'datetime',
         'total_hours' => 'decimal:2',
         'overtime_hours' => 'decimal:2',
+        'lateness_minutes' => 'integer',
+        'status' => 'string',
     ];
 
     public function employee(): BelongsTo

@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class HelpdeskTicket extends Model
 {
+    use HasFactory;
     protected $fillable = [
         'ticket_number', 'subject', 'description', 'status', 'priority',
         'category_id', 'assigned_to', 'customer_name', 'customer_email',
@@ -17,6 +19,8 @@ class HelpdeskTicket extends Model
     protected $casts = [
         'resolved_at' => 'datetime',
         'closed_at' => 'datetime',
+        'status' => 'string',
+        'priority' => 'string',
     ];
 
     public function category(): BelongsTo

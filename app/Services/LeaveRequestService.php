@@ -7,8 +7,12 @@ use App\Models\LeaveRequest;
 use App\Models\LeaveRequestState;
 use App\Models\LeaveType;
 use App\Models\User;
+use App\Mail\LeaveRequestApproved;
+use App\Mail\LeaveRequestRejected;
+use App\Mail\LeaveRequestSubmitted;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 
 class LeaveRequestService
 {
@@ -101,6 +105,13 @@ class LeaveRequestService
 
         $this->recordState($request, null, 'submitted', $user->id);
 
+        if ($managerId && $requiresManager) {
+            $manager = User::find($managerId);
+            if ($manager?->email) {
+                Mail::to($manager->email)->queue(new LeaveRequestSubmitted($request));
+            }
+        }
+
         if (!$requiresManager && !$requiresHr) {
             $this->finalizeApproval($request, null);
         }
@@ -121,6 +132,10 @@ class LeaveRequestService
         ]);
 
         $this->recordState($request, $fromStatus, $toStatus, $manager->id);
+
+        if ($toStatus === 'approved') {
+            $this->sendApprovalEmail($request);
+        }
 
         if (!in_array($request->leaveType->validation_type, ['hr', 'both'], true)) {
             $this->finalizeApproval($request, $manager);
@@ -144,6 +159,8 @@ class LeaveRequestService
 
         $this->finalizeApproval($request, $hr);
 
+        $this->sendApprovalEmail($request);
+
         return $request->refresh();
     }
 
@@ -160,6 +177,11 @@ class LeaveRequestService
         ]);
 
         $this->recordState($request, $fromStatus, 'rejected', $actor->id, $reason);
+
+        $request->load('user');
+        if ($request->user?->email) {
+            Mail::to($request->user->email)->queue(new LeaveRequestRejected($request));
+        }
 
         return $request->refresh();
     }
@@ -258,6 +280,14 @@ class LeaveRequestService
                 $actor?->id,
             );
         });
+    }
+
+    private function sendApprovalEmail(LeaveRequest $request): void
+    {
+        $request->load('user');
+        if ($request->user?->email) {
+            Mail::to($request->user->email)->queue(new LeaveRequestApproved($request));
+        }
     }
 
     private function recordState(LeaveRequest $request, ?string $from, string $to, ?int $actorId = null, ?string $reason = null): void

@@ -26,6 +26,7 @@ class Asset extends Model
     protected $casts = [
         'purchase_date' => 'date',
         'purchase_cost' => 'decimal:2',
+        'status' => 'string',
     ];
 
     public function category(): BelongsTo

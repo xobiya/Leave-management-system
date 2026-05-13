@@ -13,6 +13,10 @@ class Position extends Model
 
     protected $fillable = ['title', 'department_id', 'level', 'description'];
 
+    protected $casts = [
+        'level' => 'integer',
+    ];
+
     public function department(): BelongsTo
     {
         return $this->belongsTo(Department::class);

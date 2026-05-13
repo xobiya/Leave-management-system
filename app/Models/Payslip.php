@@ -33,6 +33,7 @@ class Payslip extends Model
         'total_deduction' => 'decimal:2',
         'net_salary' => 'decimal:2',
         'paid_at' => 'datetime',
+        'status' => 'string',
     ];
 
     public function employee(): BelongsTo

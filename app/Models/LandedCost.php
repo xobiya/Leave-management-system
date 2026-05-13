@@ -13,7 +13,10 @@ class LandedCost extends Model
         'company_id', 'description',
     ];
 
-    protected $casts = ['date' => 'date'];
+    protected $casts = [
+        'date' => 'date',
+        'amount_total' => 'decimal:2',
+    ];
 
     public function lines(): HasMany { return $this->hasMany(LandedCostLine::class, 'landed_cost_id'); }
     public function journal(): BelongsTo { return $this->belongsTo(Journal::class); }
