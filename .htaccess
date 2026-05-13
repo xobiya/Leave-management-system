@@ -1,0 +1,10 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Allow SSL/domain validation paths used by hosting providers.
+    RewriteRule ^\.well-known/ - [L]
+
+    # Send all requests through Laravel's /public directory.
+    RewriteCond %{REQUEST_URI} !^/public/
+    RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>
